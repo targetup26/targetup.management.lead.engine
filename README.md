@@ -1,89 +1,62 @@
-# 🎯 Lead Generation Engine
+# 🎯 Lead Generation Engine - Technical Specification
 
-A high-performance microservice designed for automated lead extraction, classification, and deduplication. This service integrates with Apify for data scraping and uses a robust queue system (BullMQ) for background processing.
+A high-performance microservice specialized in automated lead extraction, data enrichment, and intelligent classification. This service operates as a worker-based system to handle long-running scraping tasks without blocking the main API thread.
 
-## 🚀 Features
+## �️ Technical Stack (A to Z)
 
-- **Automated Scraping**: Seamless integration with Apify actors for Google Maps and web scraping.
-- **Queue-Based Processing**: High-reliability job processing using BullMQ and Redis.
-- **AI-Powered Classification**: (Optional/Modular) Built-in logic to categorize leads based on business data.
-- **Intelligent Deduplication**: Prevents duplicate leads using multi-factor matching (Phone, Email, URL).
-- **Graceful Error Handling**: Integrated `asyncHandler` and global error tracking.
-- **Scalable Architecture**: Clean separate of concerns between Repositories, Services, and Controllers.
-
-## 🏗️ Architecture
-
-- **Express.js**: Web framework for the API layer.
-- **Sequelize ORM**: Database management (MySQL/MariaDB).
-- **BullMQ**: Distributed job queue.
-- **Redis**: Fast message broker for the queue and temporary state.
-- **Winston**: Professional logging system.
-
-## 🛠️ Setup & Installation
-
-### 1. Prerequisites
-- Node.js (v18+)
-- MySQL / MariaDB
-- Redis Server
-- Apify API Token
-
-### 2. Install Dependencies
-```bash
-npm install
-```
-
-### 3. Environment Configuration
-Create a `.env` file in the root directory:
-```env
-PORT=4001
-NODE_ENV=development
-
-# Database
-DB_HOST=127.0.0.1
-DB_USER=root
-DB_PASSWORD=root
-DB_NAME=team_attendance
-
-# Redis
-REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
-
-# Apify
-APIFY_TOKEN=your_token_here
-APIFY_ACTOR_ID=google-maps-scraper
-
-# Security
-INTERNAL_TOKEN=your_shared_secret
-```
-
-### 4. Running the Service
-```bash
-# Development mode
-npm run dev
-
-# Production mode
-npm start
-```
-
-## 📡 API Endpoints (Internal)
-
-### `POST /api/search/start`
-Starts a new lead extraction job.
-**Payload:**
-```json
-{
-  "searchId": "uuid-v4",
-  "keyword": "Clinics",
-  "city": "Cairo",
-  "limit": 50
-}
-```
-
-### `GET /api/search/status/:jobId`
-Retrieves progress and status of a specific job.
-
-## 🛡️ Maintainers
-Restored and stabilized by **Antigravity AI**.
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Runtime** | `Node.js` | High-concurrency JavaScript runtime. |
+| **API Framework** | `Express.js` | RESTful API structure with modular routing. |
+| **Database (ORM)** | `Sequelize` | Object-Relational Mapping for MySQL/MariaDB. |
+| **Queue System** | `BullMQ` | Redis-backed message queue for background jobs. |
+| **Memory Store** | `Redis` | Message broker and job state persistence. |
+| **External API** | `Apify SDK` | Cloud-based browser automation for scraping. |
+| **ORM Dialect** | `mysql2` | High-performance MySQL driver. |
+| **Logging** | `Winston` | Multi-level logging (Console & Files). |
+| **Process Mgr** | `Nodemon` | Automatic dev server restarts. |
 
 ---
-*Part of the SROHUB Ecosystem*
+
+## 📡 API Endpoints Specification
+
+All endpoints are prefixed with `/api`. An `INTERNAL_TOKEN` must be provided in the headers for authorization.
+
+### 1. Job Orchestration
+#### `POST /search/start`
+Initiates a new scraping session via Apify.
+- **Header**: `Authorization: Bearer <INTERNAL_TOKEN>`
+- **Body Parameters**:
+    - `searchId`: (String) Unique UUID for tracking the session.
+    - `keyword`: (String) Search query (e.g., "Software Companies").
+    - `city`: (String) Target city for location-based scraping.
+    - `limit`: (Integer) Max number of leads to extract (Default: 50).
+    - `country`: (String) Target country code (Default: "US").
+- **Workflow**: 
+    1. Validates input using `LeadExtractionDTO`.
+    2. Registers the job in the MySQL `lead_jobs` table.
+    3. Pushes the job onto the `lead-extraction` Redis queue.
+    4. Worker picks up the job and triggers the Apify Actor.
+
+#### `GET /search/status/:jobId`
+Polls the real-time progress of a specific job.
+- **Response**:
+    - `status`: `pending` | `active` | `completed` | `failed`
+    - `progress`: Percentage (0-100).
+    - `processedCount`: Number of leads already saved.
+
+### 2. System Health
+#### `GET /health`
+Returns the status of the service, Database connection, and Redis availability.
+
+---
+
+## ⚙️ Core Logic Components
+
+- **`search.controller.js`**: Handles incoming requests and orchestrates queue interaction.
+- **`worker.js`**: The engine's heart. It listens to Redis, calls Apify, and processes the raw JSON results.
+- **`lead.repository.js`**: Managed data persistence, including intelligent deduplication (checking if a business exists before saving).
+- **`apify.service.js`**: Standardized wrapper for interacting with the Apify cloud platform.
+
+---
+*Maintained by Antigravity AI*
