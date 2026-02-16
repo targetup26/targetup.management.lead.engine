@@ -15,7 +15,7 @@ class SearchController {
      */
     startSearch = asyncHandler(async (req, res) => {
         const { searchId, keyword, city, limit, country, source } = req.body;
-        //aa
+
         // Validate required fields
         if (!searchId) {
             return res.status(400).json({
