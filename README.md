@@ -11,7 +11,7 @@
 ---
 
 ## 💎 Overview
-A multi-threaded, high-performance microservice specialized in **automated lead extraction**, **data enrichment**, and **intelligent classification**. This engine powers the SROHUB ecosystem by handling heavy cloud-scraping workloads asynchronously.
+A multi-threaded, high-performance microservice specialized in **automated lead extraction**, **data enrichment**, and **intelligent classification**. This engine powers the TargetUp ecosystem by handling heavy cloud-scraping workloads asynchronously.
 
 ### ⚡ Key Capabilities
 - **Non-Blocking Architecture**: Jobs are offloaded to background workers via Redis.
@@ -67,4 +67,4 @@ Returns the status monitor for the current session.
 - **Logging & Diagnostics**: Winston Logger + Daily Rotation
 
 ---
-<p align="center">*Part of the SROHUB Intelligent Ecosystem*</p>
+<p align="center">*Part of the TargetUp Intelligent Ecosystem*</p>
