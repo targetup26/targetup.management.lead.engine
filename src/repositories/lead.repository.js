@@ -16,23 +16,22 @@ class LeadRepository {
         try {
             const { id, keyword, city, country, limit, source, user_id } = jobData;
             const query = `
-                INSERT INTO lead_jobs (id, status, total_results, keyword, city, country, \`limit\`, created_at, updated_at, user_id)
-                VALUES (:id, 'pending', 0, :keyword, :city, :country, :limit, NOW(), NOW(), :user_id)
+                INSERT INTO lead_jobs (id, status, leads_extracted, \`query\`, created_at, updated_at, user_id)
+                VALUES (:id, 'PENDING', 0, :query, NOW(), NOW(), :user_id)
                 ON DUPLICATE KEY UPDATE 
-                    keyword = :keyword,
-                    city = :city,
-                    country = :country,
-                    \`limit\` = :limit,
+                    \`query\` = :query,
                     updated_at = NOW()
             `;
 
             await sequelize.query(query, {
                 replacements: {
                     id,
-                    keyword: keyword || null,
-                    city: city || null,
-                    country: country || null,
-                    limit: limit || 50,
+                    query: JSON.stringify({
+                        business_type: keyword || '',
+                        city: city || '',
+                        country: country || 'us',
+                        max_results: limit || 50
+                    }),
                     user_id: user_id || null
                 },
                 type: Sequelize.QueryTypes.INSERT

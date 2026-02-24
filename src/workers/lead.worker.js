@@ -107,7 +107,7 @@ const worker = new Worker('lead-extraction', async (job) => {
 
         // 8. Update job status to 'completed'
         await leadRepository.updateJobStatus(searchId, 'completed', {
-            total_results: insertedCount,
+            leads_extracted: insertedCount,
             apify_run_id: result.runId,
             completed_at: new Date()
         });
