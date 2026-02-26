@@ -1,9 +1,10 @@
 const { Worker } = require('bullmq');
+const Redis = require('ioredis');
 const config = require('../config');
 const logger = require('../utils/logger');
 const apifyService = require('../services/apify.service');
 const leadRepository = require('../repositories/lead.repository');
-const Redis = require('ioredis');
+const classificationService = require('../services/classification.service');
 
 // Implementation of the worker that processes jobs from the 'lead-extraction' queue
 const connection = new Redis({
@@ -30,34 +31,50 @@ const worker = new Worker('lead-extraction', async (job) => {
             zoomLevel: 15
         };
 
-        // 3. Execution (This is a blocking call in this simple implementation, 
-        // strictly for the "LeadRequestPage" flow. In production, we'd use webhooks 
-        // but for now we wait for the actor to finish)
+        // 3. Execution
         const run = await apifyService.startActor(input);
 
         // 4. Fetch Results
         const results = await apifyService.getDatasetItems(run.defaultDatasetId);
         logger.info(`Fetched ${results.length} results from Apify`, { searchId });
 
-        // 5. Store Results in DB
-        // Map Apify results to our simplified Lead model
-        const leads = results.map(item => ({
-            business_name: item.title,
-            address: item.address,
-            city: item.city || city,
-            phone: item.phone,
-            website: item.website,
-            google_url: item.url,
-            rating: item.totalScore,
-            reviews: item.reviewsCount,
-            category: item.categoryName
-        }));
+        // 5. Store Results in DB with Classification
+        const leads = [];
+        for (const item of results) {
+            // Classify the lead
+            const rawLead = {
+                business_name: item.title,
+                address: item.address,
+                city: item.city || city,
+                phone: item.phone,
+                website: item.website,
+                google_maps_url: item.url,
+                rating: item.totalScore,
+                reviews: item.reviewsCount,
+                google_types: item.categoryName ? [item.categoryName.toLowerCase()] : [],
+                search_keyword: keyword
+            };
+
+            const classification = await classificationService.classify(rawLead);
+            logger.info(`Lead classified`, {
+                business: rawLead.business_name,
+                category: classification.categoryName,
+                catId: classification.category_id
+            });
+
+            leads.push({
+                ...rawLead,
+                category_id: classification.category_id,
+                subcategory_id: classification.subcategory_id,
+                classification_confidence: classification.confidence
+            });
+        }
 
         await leadRepository.bulkInsertLeads(searchId, leads);
 
         // 6. Update Job Status to 'completed'
         await leadRepository.updateJobStatus(searchId, 'completed', {
-            total_results: leads.length
+            leads_extracted: leads.length
         });
 
         logger.info(`Job ${job.id} completed successfully`, { searchId, count: leads.length });

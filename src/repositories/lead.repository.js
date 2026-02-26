@@ -98,7 +98,6 @@ class LeadRepository {
 
         try {
             const values = leads.map(l => [
-                this.generateUUID(),
                 jobId,
                 l.title || l.business_name || l.name || 'Unknown',
                 l.address || l.fullAddress || null,
@@ -107,17 +106,21 @@ class LeadRepository {
                 l.email || null,
                 l.website || l.url || null,
                 l.rating || l.totalScore || null,
-                l.url || l.google_url || null,
-                JSON.stringify(l)
+                l.reviews || l.review_count || null,
+                l.google_maps_url || l.url || l.google_url || null,
+                l.category_id || null,
+                l.subcategory_id || null,
+                l.classification_confidence || 0,
+                l.search_keyword || null
             ]);
 
             // Use INSERT IGNORE to skip duplicates
-            const placeholders = values.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())').join(', ');
+            const placeholders = values.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())').join(', ');
             const flatValues = values.flat();
 
             const query = `
-                INSERT INTO leads 
-                (id, extraction_job_id, business_name, address, city, phone, email, website, rating, google_url, raw_data, created_at, updated_at) 
+                INSERT IGNORE INTO leads 
+                (lead_job_id, business_name, address, city, phone, email, website, rating, review_count, google_maps_url, category_id, subcategory_id, classification_confidence, search_keyword, created_at, updated_at) 
                 VALUES ${placeholders}
             `;
 
@@ -168,7 +171,7 @@ class LeadRepository {
                 replacements.email = email;
             }
             if (url) {
-                conditions.push('google_url = :url');
+                conditions.push('google_maps_url = :url');
                 replacements.url = url;
             }
 

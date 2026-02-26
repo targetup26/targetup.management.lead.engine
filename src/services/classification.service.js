@@ -64,6 +64,7 @@ class ClassificationService {
 
         // Dynamic Category Creation
         const category = await categoryRepository.findOrCreate(normalizedCategoryName, categorySlug);
+        logger.info('Category result', { category });
 
         // Subcategory Logic: Use the most specific signal (Google type or keyword)
         const subcategoryName = this.determineSubcategory(signals, bestCategory);
@@ -71,6 +72,7 @@ class ClassificationService {
 
         // Dynamic Subcategory Creation
         const subcategory = await subcategoryRepository.findOrCreate(category.id, subcategoryName, subcategorySlug);
+        logger.info('Subcategory result', { subcategory });
 
         return {
             category_id: category.id,

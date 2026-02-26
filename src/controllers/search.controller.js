@@ -60,7 +60,7 @@ class SearchController {
             country: country || 'us',
             source: source || 'unknown'
         }, {
-            jobId: searchId.toString(), // BullMQ requires jobId to be a string
+            jobId: `job-${searchId}`, // BullMQ requires jobId to be a string and cannot be integers
             removeOnComplete: false,
             removeOnFail: false
         });

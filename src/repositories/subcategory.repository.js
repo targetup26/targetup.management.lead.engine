@@ -1,27 +1,27 @@
 const sequelize = require('../utils/db');
 const { Sequelize } = require('sequelize');
 const logger = require('../utils/logger');
-const { v4: uuidv4 } = require('uuid');
 
 class SubcategoryRepository {
     async findBySlug(categoryId, slug) {
-        const query = 'SELECT * FROM subcategories WHERE category_id = :categoryId AND slug = :slug LIMIT 1';
-        const [results] = await sequelize.query(query, {
-            replacements: { categoryId, slug },
+        const query = 'SELECT * FROM subcategories WHERE category_id = ? AND slug = ? LIMIT 1';
+        const results = await sequelize.query(query, {
+            replacements: [categoryId, slug],
             type: Sequelize.QueryTypes.SELECT
         });
-        return results;
+
+        const subcategory = results && results.length > 0 ? results[0] : null;
+        return subcategory;
     }
 
     async create(data) {
-        const id = uuidv4();
         const { category_id, name, slug } = data;
         const query = `
-            INSERT INTO subcategories (id, category_id, name, slug, created_at, updated_at)
-            VALUES (:id, :category_id, :name, :slug, NOW(), NOW())
+            INSERT INTO subcategories (category_id, name, slug, created_at, updated_at)
+            VALUES (?, ?, ?, NOW(), NOW())
         `;
-        await sequelize.query(query, {
-            replacements: { id, category_id, name, slug },
+        const [id] = await sequelize.query(query, {
+            replacements: [category_id, name, slug],
             type: Sequelize.QueryTypes.INSERT
         });
         return { id, category_id, name, slug };
@@ -36,9 +36,9 @@ class SubcategoryRepository {
     }
 
     async incrementLeadCount(subcategoryId, delta = 1) {
-        const query = 'UPDATE subcategories SET lead_count = lead_count + :delta, updated_at = NOW() WHERE id = :subcategoryId';
+        const query = 'UPDATE subcategories SET lead_count = lead_count + ?, updated_at = NOW() WHERE id = ?';
         await sequelize.query(query, {
-            replacements: { subcategoryId, delta },
+            replacements: [delta, subcategoryId],
             type: Sequelize.QueryTypes.UPDATE
         });
     }
