@@ -16,7 +16,7 @@ async function startServer() {
         // Sync models if needed (be careful with existing data!)
         // await sequelize.sync({ alter: false }); 
 
-        const server = app.listen(PORT, () => {
+        const server = app.listen(PORT, '0.0.0.0', () => {
             logger.info(`Lead Engine Microservice running on port ${PORT}`);
             logger.info(`Environment: ${config.env}`);
         });
