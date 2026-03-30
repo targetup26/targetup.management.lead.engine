@@ -30,16 +30,14 @@ const logger = winston.createLogger({
     ]
 });
 
-// If we're not in production then log to the `console` with the format:
-// `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
-if (config.env !== 'production') {
-    logger.add(new winston.transports.Console({
-        format: winston.format.combine(
-            winston.format.colorize(),
-            winston.format.simple(),
-            logFormat
-        )
-    }));
-}
+// We ALWAYS log to the console in modern Docker environments (like Coolify)
+// so that the logs can be easily viewed in the dashboard.
+logger.add(new winston.transports.Console({
+    format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple(),
+        logFormat
+    )
+}));
 
 module.exports = logger;
