@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install packages
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # Copy worker and services
 COPY . .
