@@ -3,12 +3,32 @@
  * Centralized configuration with environment variable validation
  */
 
+let dbConfig = {};
+
+if (process.env.DATABASE_URL) {
+    try {
+        const dbUrl = new URL(process.env.DATABASE_URL);
+        dbConfig = {
+            host: dbUrl.hostname,
+            user: dbUrl.username,
+            password: decodeURIComponent(dbUrl.password),
+            name: dbUrl.pathname.substring(1),
+            dialect: 'mysql'
+        };
+    } catch (e) {
+        console.error('Failed to parse DATABASE_URL', e);
+    }
+} else {
+    dbConfig = {
+        host: process.env.DB_HOST || '127.0.0.1',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        name: process.env.DB_NAME || 'team_attendance',
+        dialect: 'mysql'
+    };
+}
+
 const requiredEnv = [
-    'INTERNAL_TOKEN',
-    'DB_HOST',
-    'DB_USER',
-    'DB_PASSWORD',
-    'DB_NAME',
     'REDIS_HOST',
     'APIFY_API_TOKEN'
 ];
@@ -26,15 +46,9 @@ if (missingEnv.length > 0 && process.env.NODE_ENV === 'production') {
 const config = {
     env: process.env.NODE_ENV || 'development',
     port: process.env.PORT || 4001,
-    internalToken: process.env.INTERNAL_TOKEN || 'dev-internal-token',
+    internalToken: process.env.INTERNAL_TOKEN || 'targetup2025@!$$5hgrg642365423rjtgfDFGWdfiu34ui5n@$dfuh23j4t2nrkead6gfg',
 
-    db: {
-        host: process.env.DB_HOST || '127.0.0.1',
-        user: process.env.DB_USER || 'root',
-        password: process.env.DB_PASSWORD || '',
-        name: process.env.DB_NAME || 'team_attendance',
-        dialect: 'mysql'
-    },
+    db: dbConfig,
 
     redis: {
         host: process.env.REDIS_HOST || 'localhost',
