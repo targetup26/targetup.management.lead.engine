@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  lead-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: targetup_lead_engine
+    restart: always
+    environment:
+      - PORT=${PORT:-4001}
+      - NODE_ENV=${NODE_ENV:-production}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - APIFY_API_TOKEN=${APIFY_API_TOKEN}
+      - QUEUE_CONCURRENCY=${QUEUE_CONCURRENCY:-3}
+      - QUEUE_RATE_LIMIT_MAX=${QUEUE_RATE_LIMIT_MAX:-100}
+      - QUEUE_RATE_LIMIT_DURATION=${QUEUE_RATE_LIMIT_DURATION:-60000}
+    ports:
+      - "${PORT:-4001}:${PORT:-4001}"
